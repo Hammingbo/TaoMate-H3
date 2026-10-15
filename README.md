@@ -1,18 +1,3 @@
----
-license: other
-license_name: minimax-h3-community
-license_link: LICENSE
-base_model: MiniMaxAI/MiniMax-H3
-base_model_relation: adapter
-pipeline_tag: image-to-video
-tags:
-  - audio-video
-  - streaming
-  - first-last-frame-to-audio-video
-  - lora
-  - safetensors
----
-
 # TaoMate-H3
 [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-Model-yellow)](https://huggingface.co/TaoLiveAIGC/TaoMate-H3)  [![ModelScope](https://img.shields.io/badge/ModelScope-Model-white?labelColor=%23EF3D5D)](https://modelscope.ai/models/TaoLiveAIGC/TaoMate-H3)
 
@@ -224,8 +209,6 @@ updates.
 ## 🎬 FL2VA: real-time streaming first/last-frame control
 
 The FL2VA inference subproject lives in `src/taomate-fl2av`.
-Its code is published separately in the
-[TaoMate-H3 GitHub repository](https://github.com/TaoLiveAIGC/TaoMate-H3).
 It includes one example: **seated_001 · seated presentation · family living-room organization**.
 
 | Option | Native block frames | Native output | Requests |
