@@ -222,7 +222,6 @@ Step-300 online generator LoRA · 85-frame final block · Audio: frozen Base10 t
 | Option | Native block frames | Native output | Requests |
 |---|---|---|---|
 | `--time 30` | `[39] + [34] * 19 + [85]` | 770 frames / 32.083333s | Three continuous requests, seven blocks each |
-| `--time 15` | `[39] + [34] * 8 + [85]` | 396 frames / 16.5s | Two continuous requests, seven plus three blocks |
 | `--time 10` | `[39] + [34] * 4 + [85]` | 260 frames / 10.833333s | One request, six blocks |
 | `--time 5` | `[39,85]` | 124 frames / 5.166667s | One request |
 
@@ -230,6 +229,13 @@ All modes use 24fps, 768×1376, TP2/SP4 on eight GPUs, three-step denoising,
 recent-seven clean AV-KV and one-shot whole-clip decoding.
 
 ```bash
+# Download checkpoint
+hf download TaoLiveAIGC/TaoMate-H3-FL2VA \
+  --include "config.json" "adapter_config.json" \
+            "adapter_model.safetensors" "LICENSE" "NOTICE" \
+  --local-dir models/TaoMate-H3-FL2VA
+
+# Run Taomate-FL2VA
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python src/taomate-fl2av/infer.py \
   --time 30 --model-root /absolute/path/models/MiniMax-H3 \
   --checkpoint models/TaoMate-H3-FL2VA \
