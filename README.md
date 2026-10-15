@@ -20,7 +20,7 @@ Developed by the **[Alibaba TaoLive AIGC Team](https://github.com/TaoLiveAIGC)**
 
 ## 🔥 News
 
-- 🚀 **2026/10/15: We release [TaoMate-H3-FL2VA](https://huggingface.co/TaoLiveAIGC/TaoMate-H3-FL2VA), to our knowledge the first real-time streaming first/last-frame-to-audio-video (FL2VA) model.** Three-step generation combines first/last-frame control with continuous audio-video KV caching. The step-300 online generator LoRA is available now.
+- 🚀 **2026/10/15: We release [TaoMate-H3-FL2VA](https://huggingface.co/TaoLiveAIGC/TaoMate-H3-FL2VA), to our knowledge the first real-time streaming first/last-frame-to-audio-video (FL2VA) model.** Three-step generation combines first/last-frame control with continuous audio-video KV caching.
 - 🤩2026/09/08: We first migrate MiniMax H3 to [TaoMate](https://github.com/TaoLiveAIGC/TaoMate) (T2AV) for streaming. The new models of complete streaming FL2AV and Ref2AV are on the way. Please stay tuned!❤️
 
 
