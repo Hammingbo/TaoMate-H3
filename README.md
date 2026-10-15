@@ -211,7 +211,7 @@ updates.
 The FL2VA inference subproject lives in `src/taomate-fl2av`.
 It includes one example: **seated_001 · seated presentation · family living-room organization**.
 
-[![First-frame input, generated video and last-frame input](assets/fl2va_seated_001_30s_comparison.jpg)](assets/fl2va_seated_001_30s_comparison.mp4?raw=true)
+https://github.com/user-attachments/assets/caab7175-219d-4ac0-80d9-e614ce29988e
 
 **30s mode · 770 frames / 32.083333s · 3 requests (7+7+7 blocks)**
 
