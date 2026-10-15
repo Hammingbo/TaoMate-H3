@@ -211,13 +211,13 @@ updates.
 The FL2VA inference subproject lives in `src/taomate-fl2av`.
 It includes one example: **seated_001 · seated presentation · family living-room organization**.
 
-[![First-frame input, generated video and last-frame input](assets/fl2va_seated_001_30s_comparison.jpg)](assets/fl2va_seated_001_30s_comparison.mp4)
+<video controls src="https://raw.githubusercontent.com/TaoLiveAIGC/TaoMate-H3/main/assets/fl2va_seated_001_30s_comparison.mp4"></video>
 
 **30s mode · 770 frames / 32.083333s · 3 requests (7+7+7 blocks)**
 
 Step-300 online generator LoRA · 85-frame final block · Audio: frozen Base10 teacher.
 
-Click the image to play the comparison video.
+[Preview image](assets/fl2va_seated_001_30s_comparison.jpg) · [Download video](assets/fl2va_seated_001_30s_comparison.mp4?raw=true)
 
 | Option | Native block frames | Native output | Requests |
 |---|---|---|---|
