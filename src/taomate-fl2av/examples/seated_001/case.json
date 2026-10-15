@@ -1,0 +1,73 @@
+{
+  "case_id": "seated_001",
+  "category": "seated",
+  "description": "A seated presenter discussing a tidy family living space, with empty hands.",
+  "target_seconds": 30,
+  "tail_pose": "Both hands rest separately and naturally on the tabletop, palms down with a small gap between them; she faces the camera with a relaxed closed-mouth expression.",
+  "segments": [
+    {
+      "segment_id": 0,
+      "start_seconds": 0,
+      "end_seconds": 5,
+      "seed": 9301,
+      "speech_text": "今天和大家聊聊，怎样把家里的小角落收拾舒服。",
+      "prompt": "Summary: A seated presenter discussing a tidy family living space, with empty hands. One continuous Mandarin livestream-style presentation.\nNarration 1:\nVertical portrait composition. Static seated medium shot retaining the tabletop, both hands and the headroom in the source image. A warm sunlit room with a broad wooden tabletop in the foreground, pale curtains, wooden shelves, small decorative figures and a panda-shaped cushion behind the presenter. The camera, lighting, person identity, clothes and background remain unchanged. One presenter only. No cuts, zooms, scene changes or additional people. Preserve existing printed details and background objects; add no captions, overlays, logos or watermarks.\nSpeaker_1's Appearance: An adult woman with long straight dark hair, wearing a light-blue blouse. Preserve the face, hairstyle, clothing and proportions in the input image.\nSpeaker_1's Actions: She sits upright facing the camera, with both forearms supported by the table and her hands resting together near its center. She makes one small conversational nod without changing her seated position. Motions are continuous, moderate and anatomically natural.\nSpeaker_1's Facial Expression: Attentive and friendly, with natural blinking and gaze toward the camera.\nSpeaker_1's Held Objects:\nNone. Her hands remain empty; background objects stay in place.\nSpeech Attribution:\nSpeaker_1 says: \"今天和大家聊聊，怎样把家里的小角落收拾舒服。\"\nSpeaker_1's Emotion: Calm, engaged and conversational.\nSpeaker_1's Voice Description: An adult female voice with a warm, clear and conversational Mandarin delivery.\nSound-Visual Alignment: Clear dry speech with no music. Natural speech pace, synchronized lip and facial motion. Continue the presentation in order without repeating earlier lines."
+    },
+    {
+      "segment_id": 1,
+      "start_seconds": 5,
+      "end_seconds": 10,
+      "seed": 9301,
+      "speech_text": "先给常用的东西留出位置，拿取的时候更顺手。",
+      "prompt": "Summary: A seated presenter discussing a tidy family living space, with empty hands. One continuous Mandarin livestream-style presentation.\nNarration 1:\nVertical portrait composition. Static seated medium shot retaining the tabletop, both hands and the headroom in the source image. A warm sunlit room with a broad wooden tabletop in the foreground, pale curtains, wooden shelves, small decorative figures and a panda-shaped cushion behind the presenter. The camera, lighting, person identity, clothes and background remain unchanged. One presenter only. No cuts, zooms, scene changes or additional people. Preserve existing printed details and background objects; add no captions, overlays, logos or watermarks.\nSpeaker_1's Appearance: An adult woman with long straight dark hair, wearing a light-blue blouse. Preserve the face, hairstyle, clothing and proportions in the input image.\nSpeaker_1's Actions: Her right hand opens in a small explanatory gesture below chest height while her left forearm remains supported on the table. Motions are continuous, moderate and anatomically natural.\nSpeaker_1's Facial Expression: Attentive and friendly, with natural blinking and gaze toward the camera.\nSpeaker_1's Held Objects:\nNone. Her hands remain empty; background objects stay in place.\nSpeech Attribution:\nSpeaker_1 says: \"先给常用的东西留出位置，拿取的时候更顺手。\"\nSpeaker_1's Emotion: Calm, engaged and conversational.\nSpeaker_1's Voice Description: An adult female voice with a warm, clear and conversational Mandarin delivery.\nSound-Visual Alignment: Clear dry speech with no music. Natural speech pace, synchronized lip and facial motion. Continue the presentation in order without repeating earlier lines."
+    },
+    {
+      "segment_id": 2,
+      "start_seconds": 10,
+      "end_seconds": 15,
+      "seed": 9301,
+      "speech_text": "桌面不用摆得太满，空出一点空间会更清爽。",
+      "prompt": "Summary: A seated presenter discussing a tidy family living space, with empty hands. One continuous Mandarin livestream-style presentation.\nNarration 1:\nVertical portrait composition. Static seated medium shot retaining the tabletop, both hands and the headroom in the source image. A warm sunlit room with a broad wooden tabletop in the foreground, pale curtains, wooden shelves, small decorative figures and a panda-shaped cushion behind the presenter. The camera, lighting, person identity, clothes and background remain unchanged. One presenter only. No cuts, zooms, scene changes or additional people. Preserve existing printed details and background objects; add no captions, overlays, logos or watermarks.\nSpeaker_1's Appearance: An adult woman with long straight dark hair, wearing a light-blue blouse. Preserve the face, hairstyle, clothing and proportions in the input image.\nSpeaker_1's Actions: Her right hand returns toward the table; her left hand then opens in a gentle palm-up gesture close to her torso. Motions are continuous, moderate and anatomically natural.\nSpeaker_1's Facial Expression: Attentive and friendly, with natural blinking and gaze toward the camera.\nSpeaker_1's Held Objects:\nNone. Her hands remain empty; background objects stay in place.\nSpeech Attribution:\nSpeaker_1 says: \"桌面不用摆得太满，空出一点空间会更清爽。\"\nSpeaker_1's Emotion: Calm, engaged and conversational.\nSpeaker_1's Voice Description: An adult female voice with a warm, clear and conversational Mandarin delivery.\nSound-Visual Alignment: Clear dry speech with no music. Natural speech pace, synchronized lip and facial motion. Continue the presentation in order without repeating earlier lines."
+    },
+    {
+      "segment_id": 3,
+      "start_seconds": 15,
+      "end_seconds": 20,
+      "seed": 9301,
+      "speech_text": "收纳可以慢慢调整，不用一次就安排得很复杂。",
+      "prompt": "Summary: A seated presenter discussing a tidy family living space, with empty hands. One continuous Mandarin livestream-style presentation.\nNarration 1:\nVertical portrait composition. Static seated medium shot retaining the tabletop, both hands and the headroom in the source image. A warm sunlit room with a broad wooden tabletop in the foreground, pale curtains, wooden shelves, small decorative figures and a panda-shaped cushion behind the presenter. The camera, lighting, person identity, clothes and background remain unchanged. One presenter only. No cuts, zooms, scene changes or additional people. Preserve existing printed details and background objects; add no captions, overlays, logos or watermarks.\nSpeaker_1's Appearance: An adult woman with long straight dark hair, wearing a light-blue blouse. Preserve the face, hairstyle, clothing and proportions in the input image.\nSpeaker_1's Actions: Her left hand lowers toward the tabletop. She briefly separates both hands to indicate a small amount of space. Motions are continuous, moderate and anatomically natural.\nSpeaker_1's Facial Expression: Attentive and friendly, with natural blinking and gaze toward the camera.\nSpeaker_1's Held Objects:\nNone. Her hands remain empty; background objects stay in place.\nSpeech Attribution:\nSpeaker_1 says: \"收纳可以慢慢调整，不用一次就安排得很复杂。\"\nSpeaker_1's Emotion: Calm, engaged and conversational.\nSpeaker_1's Voice Description: An adult female voice with a warm, clear and conversational Mandarin delivery.\nSound-Visual Alignment: Clear dry speech with no music. Natural speech pace, synchronized lip and facial motion. Continue the presentation in order without repeating earlier lines."
+    },
+    {
+      "segment_id": 4,
+      "start_seconds": 20,
+      "end_seconds": 25,
+      "seed": 9301,
+      "speech_text": "把喜欢的小摆件留下，也能让房间多一点温度。",
+      "prompt": "Summary: A seated presenter discussing a tidy family living space, with empty hands. One continuous Mandarin livestream-style presentation.\nNarration 1:\nVertical portrait composition. Static seated medium shot retaining the tabletop, both hands and the headroom in the source image. A warm sunlit room with a broad wooden tabletop in the foreground, pale curtains, wooden shelves, small decorative figures and a panda-shaped cushion behind the presenter. The camera, lighting, person identity, clothes and background remain unchanged. One presenter only. No cuts, zooms, scene changes or additional people. Preserve existing printed details and background objects; add no captions, overlays, logos or watermarks.\nSpeaker_1's Appearance: An adult woman with long straight dark hair, wearing a light-blue blouse. Preserve the face, hairstyle, clothing and proportions in the input image.\nSpeaker_1's Actions: Both hands make a small, unhurried open-palm gesture just above the tabletop, without crossing or obscuring her face. Motions are continuous, moderate and anatomically natural.\nSpeaker_1's Facial Expression: Attentive and friendly, with natural blinking and gaze toward the camera.\nSpeaker_1's Held Objects:\nNone. Her hands remain empty; background objects stay in place.\nSpeech Attribution:\nSpeaker_1 says: \"把喜欢的小摆件留下，也能让房间多一点温度。\"\nSpeaker_1's Emotion: Calm, engaged and conversational.\nSpeaker_1's Voice Description: An adult female voice with a warm, clear and conversational Mandarin delivery.\nSound-Visual Alignment: Clear dry speech with no music. Natural speech pace, synchronized lip and facial motion. Continue the presentation in order without repeating earlier lines."
+    },
+    {
+      "segment_id": 5,
+      "start_seconds": 25,
+      "end_seconds": 30,
+      "seed": 9301,
+      "speech_text": "找到适合自己的节奏，让每一天都过得从容一点。",
+      "prompt": "Summary: A seated presenter discussing a tidy family living space, with empty hands. One continuous Mandarin livestream-style presentation.\nNarration 1:\nVertical portrait composition. Static seated medium shot retaining the tabletop, both hands and the headroom in the source image. A warm sunlit room with a broad wooden tabletop in the foreground, pale curtains, wooden shelves, small decorative figures and a panda-shaped cushion behind the presenter. The camera, lighting, person identity, clothes and background remain unchanged. One presenter only. No cuts, zooms, scene changes or additional people. Preserve existing printed details and background objects; add no captions, overlays, logos or watermarks.\nSpeaker_1's Appearance: An adult woman with long straight dark hair, wearing a light-blue blouse. Preserve the face, hairstyle, clothing and proportions in the input image.\nSpeaker_1's Actions: She smoothly lowers and relaxes both hands. After completing the final spoken line: Both hands rest separately and naturally on the tabletop, palms down with a small gap between them; she faces the camera with a relaxed closed-mouth expression. Motions are continuous, moderate and anatomically natural.\nSpeaker_1's Facial Expression: Attentive and friendly, with natural blinking and gaze toward the camera.\nSpeaker_1's Held Objects:\nNone. Her hands remain empty; background objects stay in place.\nSpeech Attribution:\nSpeaker_1 says: \"找到适合自己的节奏，让每一天都过得从容一点。\"\nSpeaker_1's Emotion: Calm, engaged and conversational.\nSpeaker_1's Voice Description: An adult female voice with a warm, clear and conversational Mandarin delivery.\nSound-Visual Alignment: Clear dry speech with no music. Natural speech pace, synchronized lip and facial motion. Continue the presentation in order without repeating earlier lines."
+    }
+  ],
+  "initial_conditions": [
+    {
+      "type": "image",
+      "role": "keyframe",
+      "frame_index": 0,
+      "uri": "first.png"
+    },
+    {
+      "type": "image",
+      "role": "keyframe",
+      "frame_index": -1,
+      "uri": "last.png",
+      "time_anchor": "clip_end"
+    }
+  ],
+  "title": "坐播 · 家庭客厅整理"
+}

@@ -1,3 +1,18 @@
+---
+license: other
+license_name: minimax-h3-community
+license_link: LICENSE
+base_model: MiniMaxAI/MiniMax-H3
+base_model_relation: adapter
+pipeline_tag: image-to-video
+tags:
+  - audio-video
+  - streaming
+  - first-last-frame-to-audio-video
+  - lora
+  - safetensors
+---
+
 # TaoMate-H3
 [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-Model-yellow)](https://huggingface.co/TaoLiveAIGC/TaoMate-H3)  [![ModelScope](https://img.shields.io/badge/ModelScope-Model-white?labelColor=%23EF3D5D)](https://modelscope.ai/models/TaoLiveAIGC/TaoMate-H3)
 
@@ -19,11 +34,15 @@ audio and video in small chunks and supports continuous long-form generation at
 Developed by the **[Alibaba TaoLive AIGC Team](https://github.com/TaoLiveAIGC)**. Powered by [MiniMax H3](https://github.com/MiniMax-AI/MiniMax-H3).
 
 ## 🔥 News
+
+- 🚀 **2026/10/15: We release [TaoMate-H3-FL2VA](https://huggingface.co/TaoLiveAIGC/TaoMate-H3-FL2VA), to our knowledge the first real-time streaming first/last-frame-to-audio-video (FL2VA) model.** Three-step generation combines first/last-frame control with continuous audio-video KV caching. The step-300 online generator LoRA is available now.
 - 🤩2026/09/08: We first migrate MiniMax H3 to [TaoMate](https://github.com/TaoLiveAIGC/TaoMate) (T2AV) for streaming. The new models of complete streaming FL2AV and Ref2AV are on the way. Please stay tuned!❤️
 
 
 ## 🚀 Features
 
+- **Real-time streaming FL2VA** — first/last-frame control with three-step
+  blockwise generation, persistent clean AV-KV, and a global endpoint deadline.
 - **Three-step LoRA streaming generation** — each small chunk uses three
   Stage3 denoising intervals.
 - **Audio-video joint generation** — speech, sound, and video are generated on
@@ -37,16 +56,21 @@ Developed by the **[Alibaba TaoLive AIGC Team](https://github.com/TaoLiveAIGC)**
 - **Single-node inference** — supports 4 GPUs or 8 GPUs with TP2 and Ulysses
   sequence parallelism.
 
-## 🧱 Model Download
+## 🧱 Model Downloads
 | Models                |                       Download Link                                           |    Notes                      |
 |-----------------------|-------------------------------------------------------------------------------|-------------------------------|
 | [MiniMax H3](https://github.com/MiniMax-AI/MiniMax-H3)        |      🤗 [Huggingface](https://huggingface.co/MiniMaxAI/MiniMax-H3)     | Base model
 | TaoMate-H3 T2AV  |      🤗 [Huggingface](https://huggingface.co/TaoLiveAIGC/TaoMate-H3)         | Our 3-step LoRA weights for T2AV
-| TaoMate-H3 FL2AV       |      **TBD**     |  will be released before 26/10/15
+| TaoMate-H3 FL2AV       |      🤗 [Hugging Face](https://huggingface.co/TaoLiveAIGC/TaoMate-H3-FL2VA)     | Our 3-step LoRA weights for FL2AV
 | TaoMate-H3 Ref2AV |      **TBD**         |  **TBD**
 
+The FL2VA adapter follows the same three-file layout as the T2AV release:
+`config.json`, `adapter_config.json`, and `adapter_model.safetensors`.
+It preserves the online generator weights in float32 and includes the inference
+configuration; optimizer state, EMA, and training-only score models are excluded.
 
-## 🛠️Installation
+
+## 🛠️ T2AV Installation
 
 ### Requirements
 
@@ -89,10 +113,10 @@ hf download MiniMaxAI/MiniMax-H3 \
   --local-dir models/MiniMax-H3
 ```
 
-TaoMate-H3 LoRA weights are available on
-[Hugging Face](https://huggingface.co/TaoLiveAIGC/TaoMate-H3). The current
+TaoMate-H3 T2AV LoRA weights are available on
+[Hugging Face](https://huggingface.co/TaoLiveAIGC/TaoMate-H3). The T2AV
 release is the step-3000 generator EMA adapter (rank 128, alpha 128).
-Inference downloads it automatically to `models/TaoMate-H3` on first use.
+T2AV inference downloads it automatically to `models/TaoMate-H3` on first use.
 To download it in advance:
 
 ```bash
@@ -113,7 +137,7 @@ models/TaoMate-H3/
 └── adapter_model.safetensors
 ```
 
-## ⭐️ Inference
+## ⭐️ T2AV Inference
 
 TaoMate-H3 accepts either one prompt through `--prompt` or one prompt per
 five-second block through `--prompt-json`.
@@ -180,7 +204,7 @@ inference.
 
 ## Performance and Advantages
 
-The following results were measured on one 8 × NVIDIA H20 96 GB node with
+The following **T2AV** results were measured on one 8 × NVIDIA H20 96 GB node with
 TP2 × Ulysses4, a `480x864` canvas, a 10-second output, and seed `8301`.
 
 | Metric | TaoMate-H3 | MiniMax H3 | Improvement |
@@ -196,6 +220,30 @@ publication in the matched first-chunk publication benchmark. The table covers
 the Stage3 generation path and excludes the command's internal audio preparation.
 A 10-second TaoMate-H3 run contains 24 generation forwards and eight clean-KV
 updates.
+
+## 🎬 FL2VA: real-time streaming first/last-frame control
+
+The FL2VA inference subproject lives in `src/taomate-fl2av`.
+Its code is published separately in the
+[TaoMate-H3 GitHub repository](https://github.com/TaoLiveAIGC/TaoMate-H3).
+It includes one example: **seated_001 · seated presentation · family living-room organization**.
+
+| Option | Native block frames | Native output | Requests |
+|---|---|---|---|
+| `--time 30` | `[39] + [34] * 19 + [85]` | 770 frames / 32.083333s | Three continuous requests, seven blocks each |
+| `--time 15` | `[39] + [34] * 8 + [85]` | 396 frames / 16.5s | Two continuous requests, seven plus three blocks |
+| `--time 10` | `[39] + [34] * 4 + [85]` | 260 frames / 10.833333s | One request, six blocks |
+| `--time 5` | `[39,85]` | 124 frames / 5.166667s | One request |
+
+All modes use 24fps, 768×1376, TP2/SP4 on eight GPUs, three-step denoising,
+recent-seven clean AV-KV and one-shot whole-clip decoding.
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python src/taomate-fl2av/infer.py \
+  --time 30 --model-root /absolute/path/models/MiniMax-H3 \
+  --checkpoint models/TaoMate-H3-FL2VA \
+  --output outputs/seated_001_30
+```
 
 ## License
 
