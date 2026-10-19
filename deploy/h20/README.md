@@ -55,3 +55,14 @@ as incompatible even though they work on the GPU host.
 # GPU host, using the shared Python 3.10 environment:
 WHEELHOUSE_PATH=/shared/wheelhouse bash deploy/h20/setup.sh
 ```
+
+If distribution packages cannot be fetched, an existing Linux FFmpeg on the CPU
+host can also be copied to shared storage. Keep the source package's licenses
+with your internal tool distribution. The target Linux host must have a glibc
+at least as new as the source host.
+
+```bash
+python deploy/h20/copy_ffmpeg.py --source-prefix /path/to/existing/conda/env \
+  --destination /shared/taomate-media-tools
+export PATH=/shared/taomate-media-tools/bin:$PATH
+```
