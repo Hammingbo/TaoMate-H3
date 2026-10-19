@@ -66,3 +66,15 @@ python deploy/h20/copy_ffmpeg.py --source-prefix /path/to/existing/conda/env \
   --destination /shared/taomate-media-tools
 export PATH=/shared/taomate-media-tools/bin:$PATH
 ```
+
+Alternatively download a complete FFmpeg/FFprobe distribution on the CPU host:
+
+```bash
+bash deploy/h20/fetch_ffmpeg.sh /shared/taomate-tools
+# GPU host:
+export PATH=/shared/taomate-tools/media-dist/bin:$PATH
+```
+
+This uses the BtbN Linux build linked by the FFmpeg download page, verifies the
+published SHA256 checksum and retains its license files. Execute these newer
+binaries on the GPU container, not the older CPU host.
