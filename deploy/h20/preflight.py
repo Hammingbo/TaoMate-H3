@@ -40,7 +40,7 @@ def main() -> None:
     if not all(name in encoders.split() for name in ("libx264", "aac")):
         raise RuntimeError("FFmpeg must support libx264 and AAC")
     partition = args.model_root / "FL2VA"
-    for component in ("transformer", "text_encoder", "vae", "audio_vae"):
+    for component in ("transformer", "text_encoder", "video_vae", "audio_vae"):
         if not (partition / component).is_dir():
             raise RuntimeError(f"Missing model component: {partition / component}")
     for name in ("adapter_config.json", "adapter_model.safetensors"):

@@ -44,3 +44,17 @@ Run detached with your usual job manager or `nohup` and retain the printed PID.
 Run the short case first, then run 30 seconds after it passes. On hosts with
 restricted egress, fetch code and models through a development host rather than
 changing network security settings on the GPU host.
+
+If the development host has an older glibc, prepare wheels for the GPU host
+explicitly. Installing PyTorch on the CPU host can otherwise hide recent wheels
+as incompatible even though they work on the GPU host.
+
+```bash
+# CPU host, Python 3.10; use a shared destination.
+"$VENV_PATH/bin/python" deploy/h20/prepare_wheelhouse.py --destination /shared/wheelhouse
+# GPU host, using the shared Python 3.10 environment:
+"$VENV_PATH/bin/python" -m pip install --no-index --find-links /shared/wheelhouse \
+  torch==2.8.0 torchvision==0.23.0 setuptools wheel
+"$VENV_PATH/bin/python" -m pip install --no-index --find-links /shared/wheelhouse \
+  --no-build-isolation -e .
+```
