@@ -78,3 +78,15 @@ export PATH=/shared/taomate-tools/media-dist/bin:$PATH
 This uses the BtbN Linux build linked by the FFmpeg download page, verifies the
 published SHA256 checksum and retains its license files. Execute these newer
 binaries on the GPU container, not the older CPU host.
+
+To keep the final Conda environment on a shared mount while installing from an
+older CPU host, first create that environment with Conda and then run:
+
+```bash
+/shared/1_code_space/envs/taomate-h3/bin/python deploy/h20/install_shared.py \
+  --wheelhouse /shared/wheelhouse
+```
+
+This explicitly installs wheels for the newer GPU platform without importing
+CUDA code on the CPU host. All GPU hosts must mount the environment at the same
+absolute path and provide a compatible Linux x86-64 runtime and NVIDIA driver.

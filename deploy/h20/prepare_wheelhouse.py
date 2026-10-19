@@ -9,6 +9,14 @@ import sys
 from pathlib import Path
 
 
+def project_requirements() -> list[str]:
+    source = (Path(__file__).resolve().parents[2] / "pyproject.toml").read_text()
+    match = re.search(r"(?ms)^dependencies\s*=\s*(\[.*?^\])", source)
+    if match is None:
+        raise RuntimeError("Cannot locate project dependency list")
+    return ast.literal_eval(match.group(1))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--destination", type=Path, required=True)
@@ -16,12 +24,7 @@ def main() -> None:
     args = parser.parse_args()
     if sys.version_info[:2] != (3, 10):
         raise RuntimeError("Run with Python 3.10 for this cp310 wheelhouse")
-    root = Path(__file__).resolve().parents[2]
-    source = (root / "pyproject.toml").read_text()
-    match = re.search(r"(?ms)^dependencies\s*=\s*(\[.*?^\])", source)
-    if match is None:
-        raise RuntimeError("Cannot locate project dependency list")
-    requirements = ast.literal_eval(match.group(1))
+    requirements = project_requirements()
     args.destination.mkdir(parents=True, exist_ok=True)
     command = [sys.executable, "-m", "pip", "download", "--only-binary=:all:",
                "--python-version", "310", "--implementation", "cp", "--abi", "cp310",
