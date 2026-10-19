@@ -53,8 +53,5 @@ as incompatible even though they work on the GPU host.
 # CPU host, Python 3.10; use a shared destination.
 "$VENV_PATH/bin/python" deploy/h20/prepare_wheelhouse.py --destination /shared/wheelhouse
 # GPU host, using the shared Python 3.10 environment:
-"$VENV_PATH/bin/python" -m pip install --no-index --find-links /shared/wheelhouse \
-  torch==2.8.0 torchvision==0.23.0 setuptools wheel
-"$VENV_PATH/bin/python" -m pip install --no-index --find-links /shared/wheelhouse \
-  --no-build-isolation -e .
+WHEELHOUSE_PATH=/shared/wheelhouse bash deploy/h20/setup.sh
 ```
