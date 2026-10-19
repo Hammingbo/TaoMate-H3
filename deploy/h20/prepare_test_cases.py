@@ -37,7 +37,8 @@ integrated_multimodal_description, overall_soundscape, non_diegetic_music.
 The first field begins [Shot 1], mentions <Picture 1>, states 5.00 seconds,
 describes a clear natural voice outside dialogue tags, identifies the visible
 presenter as (S1), and contains ONE <d>[Chinese]EXACT speech_script</d> block.
-Use at most 28 Chinese characters of natural speech per five-second clip.
+Target 14-20 Chinese characters of natural speech per five-second clip. Keep the
+spoken line short; never copy an entire long sentence from the reference video.
 No stage directions inside dialogue. Never omit (S1) in later clips. Describe
 one simple motion developing naturally over five seconds without an end-image
 constraint. All descriptive prose is English; Chinese is allowed only inside
@@ -78,8 +79,9 @@ def validate_script(script, rules, count=12):
     for index, shot in enumerate(shots, 1):
         if shot.get("shot_id") != index or shot.get("duration") != 5:
             raise ValueError("shot order or five-second duration differs")
-        if len(re.findall(r"[\u3400-\u9fff]", shot.get("speech_script", ""))) > 28:
-            raise ValueError(f"shot {index} speech exceeds 28 Chinese characters")
+        count = len(re.findall(r"[\u3400-\u9fff]", shot.get("speech_script", "")))
+        if count > 28:
+            raise ValueError(f"shot {index} has {count} Chinese characters; shorten its speech to 14-20 characters, and update its dialogue tag identically")
         shot["h3_prompt"] = rules.validate_h3_fields(shot, use_end_frame=False, duration=5)
     return shots
 
@@ -100,6 +102,7 @@ def main():
     manifest = {"schema": "taomate_h3.independent_i2va_benchmark.v1", "duration": 5,
                 "segments_per_source": 12, "tail_constraint": False,
                 "test_set_sha256": sha256(args.test_set),
+                "preparer_sha256": sha256(Path(__file__)),
                 "prompt_policy": rules.H3_PROMPT_POLICY_VERSION,
                 "prompt_rules_sha256": sha256(Path(rules.__file__)),
                 "live_generation_commit": subprocess.check_output(
@@ -124,6 +127,7 @@ def main():
             shots = validate_script(script, rules)
         else:
             error = ""
+            rejected = ""
             for attempt in range(3):
                 request = (
                     "Prepare exactly 12 sequential five-second plans covering the first "
@@ -135,6 +139,10 @@ def main():
                     "No end-image constraint. "
                     + ("Correct this previous validation error in every clip: " + error if error else "")
                 )
+                if rejected:
+                    request += ("\nRepair this rejected draft. Keep all valid shots and their "
+                                "wording; fix the failed speech/format consistently in speech_script "
+                                "and h3_prompt. Return all twelve corrected shots.\n" + rejected)
                 text, elapsed = client.call_gemini_wanqing(
                     str(video), request, system_prompt=RULES)
                 if not text:
@@ -143,6 +151,8 @@ def main():
                 try:
                     cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", text.strip())
                     script = json.loads(cleaned)
+                    (folder/f'draft_{attempt+1}.json').write_text(json.dumps(script, ensure_ascii=False, indent=2))
+                    rejected = json.dumps(script, ensure_ascii=False)
                     shots = validate_script(script, rules)
                 except (ValueError, TypeError, KeyError) as exc:
                     error = str(exc)[:500]
