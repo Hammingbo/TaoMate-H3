@@ -89,6 +89,15 @@ def validate_script(script, rules, count=12):
         count = len(re.findall(r"[\u3400-\u9fff]", shot.get("speech_script", "")))
         if count > 28:
             raise ValueError(f"shot {index} has {count} Chinese characters; shorten its speech to 14-20 characters, and update its dialogue tag identically")
+        fields = shot.get('h3_prompt')
+        if isinstance(fields, dict):
+            body = fields.get('integrated_multimodal_description', '')
+            labels = re.findall(r'\[Shot\s+\d+\]', body)
+            # Every prompt is one shot. Its sequence ID lives in shot_id,
+            # while H3's local shot label must remain 1. Preserve all prose.
+            if len(labels) == 1 and body.lstrip().startswith(labels[0]):
+                fields['integrated_multimodal_description'] = re.sub(
+                    r'^\s*\[Shot\s+\d+\]', '[Shot 1]', body, count=1)
         shot["h3_prompt"] = rules.validate_h3_fields(shot, use_end_frame=False, duration=5)
     return shots
 
