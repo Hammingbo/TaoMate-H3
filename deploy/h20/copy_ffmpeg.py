@@ -24,7 +24,15 @@ def main() -> None:
     libraries = {}
     for binary in ("ffmpeg", "ffprobe"):
         source = args.source_prefix / "bin" / binary
-        dependencies = subprocess.check_output(["ldd", str(source)], text=True)
+        result = subprocess.run(["ldd", str(source)], text=True,
+                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        dependencies = result.stdout
+        if result.returncode:
+            with source.open("rb") as handle:
+                is_elf = handle.read(4) == b"\x7fELF"
+            if not is_elf or not any(message in dependencies.lower()
+                                     for message in ("not a dynamic executable", "statically linked")):
+                raise RuntimeError(f"Cannot inspect {source}: {dependencies}")
         if "not found" in dependencies:
             raise RuntimeError(f"Source {binary} has missing libraries:\n{dependencies}")
         for line in dependencies.splitlines():
