@@ -40,6 +40,7 @@ def generate_long_video_lean(
     streaming_overlay: Any,
     transport_plans: Sequence[Any],
     clip_frames: int,
+    precomputed_features=None,
 ) -> dict[str, Any]:
     import torch
 
@@ -77,7 +78,10 @@ def generate_long_video_lean(
         segments_dir.mkdir()
 
     _rank_zero_action(runtime, "lean output setup", setup)
-    features = runtime.precompute_text_prompts(tuple(segment_prompts))
+    features = (runtime.precompute_text_prompts(tuple(segment_prompts))
+                if precomputed_features is None else precomputed_features)
+    if len(features) != segment_count:
+        raise ValueError('precomputed text feature count differs from segment count')
     videos: list[Any] = []
     audios: list[Any] = []
     requests: list[dict[str, Any]] = []

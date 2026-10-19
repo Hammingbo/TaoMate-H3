@@ -5,13 +5,14 @@ import json
 from digitalhuman_h3.streaming.geometry import video_temporal_positions
 
 def visual_contract(case, schedule):
-    return dict(task='ii2va', initial_conditions=case['initial_conditions'],
+    has_tail = len(case['initial_conditions']) == 2
+    return dict(task='ii2va' if has_tail else 'i2va', initial_conditions=case['initial_conditions'],
         end_frame=schedule.plan.native_frame_count, end_video_latent=schedule.video_latent_count,
         prompt_encoding='text_only', video_context='joint_native_fl2va_global_keyframes_tail40',
-        image_noise_aug=0.999,tail_visibility='last_request_only',
-        tail_start_request_index=len(schedule.requests)-1)
+        image_noise_aug=0.999,tail_visibility='last_request_only' if has_tail else 'none',
+        tail_start_request_index=len(schedule.requests)-1 if has_tail else None)
 
-def teacher_packed(torch, *, text_len, latent_h, latent_w, request, schedule):
+def teacher_packed(torch, *, text_len, latent_h, latent_w, request, schedule, has_end_frame=True):
     """Native joint AV layout plus the established frozen 40-latent audio prefix."""
     from digitalhuman_h3.model.packed_sequence import (
         minimax_h3_packed_sequence, minimax_h3_audio_only_frozen_prefix_packed_sequence)
@@ -19,7 +20,7 @@ def teacher_packed(torch, *, text_len, latent_h, latent_w, request, schedule):
     packed = minimax_h3_packed_sequence(text_len=text_len, latent_t=request.video_latent_count,
         latent_h=latent_h, latent_w=latent_w, audio_t=request.audio_latent_count,
         include_keyframe_cond=True,
-        keyframe_frame_indices=[0,-1] if request.index==len(schedule.requests)-1 else [0],
+        keyframe_frame_indices=[0,-1] if has_end_frame and request.index==len(schedule.requests)-1 else [0],
         frame_count=request.frame_count)
     frame_rows = (latent_h//2)*(latent_w//2)
     grid = packed['img_position_ids']
@@ -51,7 +52,7 @@ def teacher_packed(torch, *, text_len, latent_h, latent_w, request, schedule):
             cu_seqlens=torch.tensor([0,used+extra,size],dtype=torch.int32))
     return packed
 
-def run_teacher(args, case, schedule, transport):
+def run_teacher(args, case, schedule, transport, *, runtime=None, features=None, close_runtime=True):
     import torch
     from digitalhuman_h3.runtime import H3Runtime
     from digitalhuman_h3.distributed import use_parallel_context
@@ -62,13 +63,14 @@ def run_teacher(args, case, schedule, transport):
     from digitalhuman_h3.inference.base10_hiar import (
         BASE10_KEYFRAME_STRATEGY, base10_keyframe_teacher_producer_topology,
         base10_teacher_geometry, write_base10_teacher_request)
-    runtime = H3Runtime(model_root=args.model_root, variant='fl2va',tp_size=2,ulysses_degree=4)
+    runtime = runtime or H3Runtime(model_root=args.model_root, variant='fl2va',tp_size=2,ulysses_degree=4)
     pipe = runtime.pipeline
     output = args.output_dir
     if runtime.is_main_process:
         output.mkdir(parents=True,exist_ok=False)
     runtime.barrier()
-    features = runtime.precompute_text_prompts(tuple(r.prompt for r in schedule.requests))
+    if features is None:
+        features = runtime.precompute_text_prompts(tuple(r.prompt for r in schedule.requests))
     previous = None
     visual = visual_contract(case,schedule)
     with torch.inference_mode(), use_parallel_context(runtime.parallel_context):
@@ -83,14 +85,15 @@ def run_teacher(args, case, schedule, transport):
             audio = pipe._initial_audio_noise(geom,generator=audio_rng)
             rows = (geom.video_latent_h//2)*(geom.video_latent_w//2)
             # Encode both images first to preserve the baseline RNG sequence.
-            tail_visible = request.index == len(schedule.requests)-1
+            tail_visible = len(case['initial_conditions']) == 2 and request.index == len(schedule.requests)-1
             if not tail_visible:
                 cond = cond[:rows]
             video = video[(geom.video_latent_t-request.video_latent_count)*rows:]
             audio = audio.view(2,geom.audio_latent_t,-1)[:,-request.audio_latent_count:].contiguous().view(-1,32)
             ref = None if previous is None else previous.view(2,-1,32)[:,-40:].contiguous().view(-1,32)
             packed = teacher_packed(torch,text_len=feature[0].shape[0],latent_h=geom.video_latent_h,
-                latent_w=geom.video_latent_w,request=request,schedule=schedule)
+                latent_w=geom.video_latent_w,request=request,schedule=schedule,
+                has_end_frame=len(case['initial_conditions']) == 2)
             packed['token_tags'][packed['text_pos']] = feature[1].view(-1)
             branch = MiniMaxH3DenoiseBranch(packed=packed,text_embeddings=feature[0],
                 token_tags=packed['token_tags'],device=runtime.device,parallel_context=runtime.parallel_context)
@@ -124,7 +127,7 @@ def run_teacher(args, case, schedule, transport):
             receipt = dict(visual_conditioning=visual, conditioned_forward_count=forwards,
                 keyframe_frame_indices=[0,-1] if tail_visible else [0],
                 tail_reference_visible=tail_visible,
-                tail_start_request_index=len(schedule.requests)-1,
+                tail_start_request_index=len(schedule.requests)-1 if len(case['initial_conditions']) == 2 else None,
                 audio_noise_seed=request.seed,partition='fl2va',reference_latents_per_channel=0 if ref is None else 40,
                 prefix_max_abs_change=prefix_change,active_milestones_are_exact_canonical_target=True,
                 target_geometry='canonical_active',teacher_persistent_kv=False,
@@ -145,4 +148,6 @@ def run_teacher(args, case, schedule, transport):
             producer_topology=base10_keyframe_teacher_producer_topology(),producer_geometry=producer_geometry,
             strategy=BASE10_KEYFRAME_STRATEGY,partition='fl2va',visual_conditioning=visual,
             audio_noise_seed_sequence=[r.seed for r in schedule.requests],persistent_kv=False),indent=2))
-    runtime.barrier(); torch.distributed.destroy_process_group()
+    runtime.barrier()
+    if close_runtime:
+        torch.distributed.destroy_process_group()

@@ -49,8 +49,8 @@ def geometry(time: int):
 def prepare_case(case_path: Path, time: int):
     source = json.loads(case_path.read_text(encoding='utf-8'))
     whole, active, transport = geometry(time)
-    if len(source['segments']) != 6:
-        raise ValueError('case.json must contain the six original ordered 5s segments')
+    if len(source['segments']) < time // 5:
+        raise ValueError('case.json has fewer ordered 5s segments than requested')
     source_segments = source['segments'][:time//5]
     requests, segments = [], []
     for index, plan in enumerate(active):
@@ -58,18 +58,27 @@ def prepare_case(case_path: Path, time: int):
         segment = selected[0]
         speeches, actions = [], []
         for item in selected:
-            normalized = official_three_field_prompt(item['prompt'])
-            if f"<d>[Chinese] {item['speech_text']}</d>" not in normalized:
+            raw = item['prompt']
+            normalized = official_three_field_prompt(raw) if raw.startswith('Summary: ') else raw
+            dialogues = re.findall(r'<d>\s*\[Chinese\]\s*(.*?)</d>', normalized, re.DOTALL)
+            if [d.strip() for d in dialogues] != [item['speech_text'].strip()]:
                 raise ValueError('speech metadata differs from source prompt')
+            if any(normalized.count(field + ':') != 1 for field in
+                   ('integrated_multimodal_description', 'overall_soundscape', 'non_diegetic_music')):
+                raise ValueError('prompt must contain exactly the three H3 fields')
             speeches.append(item['speech_text'])
-            actions.append(re.search(r"Speaker_1's Actions: ([^\n]+)", item['prompt']).group(1))
+            action = re.search(r"Speaker_1's Actions: ([^\n]+)", raw)
+            actions.append(action.group(1) if action else '')
         dialogue = ''.join(speeches)
         if len(selected) == 2:
+            if not all(item['prompt'].startswith('Summary: ') for item in selected):
+                raise ValueError('formatted custom prompts currently support independent --time 5 only')
             merged = re.sub(r'Speaker_1 says: ".*?"', lambda _: f'Speaker_1 says: "{dialogue}"', segment['prompt'])
             merged = re.sub(r"Speaker_1's Actions: [^\n]+", lambda _: "Speaker_1's Actions: First: " + actions[0] + ' Then: ' + actions[1], merged)
             prompt = official_three_field_prompt(merged)
         else:
-            prompt = official_three_field_prompt(segment['prompt'])
+            raw = segment['prompt']
+            prompt = official_three_field_prompt(raw) if raw.startswith('Summary: ') else raw
         phase_start = index * 7
         first, last = whole.phases[phase_start], whole.phases[phase_start+len(plan.phases)-1]
         requests.append(Base10HiARRequest(index=index, prompt=prompt, seed=segment['seed'],
@@ -86,9 +95,15 @@ def prepare_case(case_path: Path, time: int):
         if not image.is_file():
             raise FileNotFoundError(image)
         conditions.append(dict(type='image', role='keyframe', uri=str(image), frame_index=condition['frame_index']))
-    if [c['frame_index'] for c in conditions] != [0, -1]:
-        raise ValueError('case.json must specify first/end image conditions [0,-1]')
-    case = dict(case_id=source['case_id'], source_case_id=source['case_id'], task='ii2va',
+    indices = [c['frame_index'] for c in conditions]
+    if indices not in ([0], [0, -1]):
+        raise ValueError('case.json must specify first image [0] or first/end images [0,-1]')
+    if indices == [0] and time != 5:
+        raise ValueError('first-image-only cases currently support independent --time 5 only')
+    if indices == [0] and any(re.search(r'Picture\s+2\b', r.prompt) for r in requests):
+        raise ValueError('first-image-only prompt must not reference Picture 2')
+    case = dict(case_id=source['case_id'], source_case_id=source['case_id'],
+        task='ii2va' if len(conditions) == 2 else 'i2va',
         title=source['title'], category=source['category'], description=source['description'],
         source_manifest=str(case_path.resolve()), source_target_seconds=time,
         text_policy=('unaltered_first_5s_segment' if time == 5 else
