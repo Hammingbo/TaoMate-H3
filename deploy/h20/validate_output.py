@@ -12,11 +12,11 @@ from pathlib import Path
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("video", type=Path)
-    parser.add_argument("--time", type=int, choices=(5, 10, 15, 30), required=True)
-    parser.add_argument("--delivery-seconds", type=int, choices=(5,),
+    parser.add_argument("--time", type=int, choices=(5, 10, 15, 30, 60), required=True)
+    parser.add_argument("--delivery-seconds", type=int, choices=(5, 60),
                         help="validate an explicitly cropped 120-frame delivery, preserving the native file separately")
     args = parser.parse_args()
-    expected_frames = {5: 124, 10: 260, 15: 396, 30: 770}[args.time]
+    expected_frames = {5: 124, 10: 260, 15: 396, 30: 770, 60: 1450}[args.time]
     if args.delivery_seconds:
         expected_frames = 24 * args.delivery_seconds
     probe = json.loads(subprocess.check_output([

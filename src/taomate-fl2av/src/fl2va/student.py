@@ -51,6 +51,16 @@ def run_student(args,case,schedule,active,transport,*,runtime=None,features=None
             expected_output_width=768,expected_output_height=1376,streaming_overlay=overlay,
             transport_plans=transport,
             clip_frames=schedule.plan.native_frame_count,precomputed_features=features)
+        if case.get('source_target_seconds') == 60:
+            history = overlay.executions
+            assert len(history) == 12
+            assert history[0].starting_history_tokens == 0
+            for previous, current in zip(history, history[1:]):
+                assert current.cross_request_kv_reused
+                assert not current.cross_request_kv_boundary_reset
+                assert not current.audio_kv_reset_applied
+                assert current.continues_history_from(previous)
+            assert all(e.noisy_kv_writes == 0 for e in history)
         executions=[e.to_dict() for e in overlay.executions]
     if runtime.is_main_process:
         frames=[p['frame_stop']-p['frame_start'] for e in executions for p in e['phases']]

@@ -8,18 +8,24 @@ from pathlib import Path
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('root', type=Path)
+    parser.add_argument('--continuous', action='store_true')
     args = parser.parse_args()
     root = args.root.resolve()
-    manifest = json.loads((root/'manifest.json').read_text())
+    manifest = json.loads((root/('continuous_manifest.json' if args.continuous else 'manifest.json')).read_text())
     groups = []
     for source in range(1, 10):
         cards = []
         entries = [entry for entry in manifest['cases'] if entry['source_index'] == source]
+        if not entries:
+            continue
         for entry in entries:
             case = json.loads(Path(entry['case_file']).read_text())
             segment = case['segments'][0]
             case_id = entry['case_id']
             start = entry['segment_index']*5
+            if args.continuous:
+                segment = dict(speech_text=' / '.join(s['speech_text'] for s in case['segments']),
+                    prompt='\n\n'.join(f"[{i*5}–{(i+1)*5}s]\n{s['prompt']}" for i,s in enumerate(case['segments'])))
             cards.append(f'''<article data-case="{html.escape(case_id)}">
               <h3>片段 {entry['segment_index']+1:02d} · 参考 {start}–{start+5}s</h3>
               <p class="state">等待生成</p>
@@ -58,6 +64,12 @@ def main():
     document.addEventListener('play',event=>{if(event.target.tagName==='VIDEO')
     document.querySelectorAll('video').forEach(video=>{if(video!==event.target)video.pause();});},true);
     refresh();setInterval(refresh,15000);</script></html>'''
+    if args.continuous:
+        page = page.replace('108 段测试', '9 条连续视频').replace('9 组 × 12 段', '9 条连续 60 秒视频')
+        page = page.replace('交付时长严格 5 秒', '每条 12 个 prompt · 跨 prompt 保留 KV · 交付 60 秒')
+        page = page.replace('12 段独立生成 · 每段 5 秒 · 共用本任务的编辑首帧', '60 秒连续 AR 生成 · 首帧仅在开头输入')
+        page = page.replace('片段 01 · 参考 0–5s', '连续视频 · 参考 0–60s')
+        page = page.replace('renders/', 'continuous_renders/').replace('${status.passed}/108 段', '${status.passed}/9 条')
     (root/'index.html').write_text(page)
     print(f'REVIEW_PAGE_READY {root / "index.html"}')
 

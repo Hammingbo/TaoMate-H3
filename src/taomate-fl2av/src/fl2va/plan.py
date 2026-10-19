@@ -6,7 +6,7 @@ import re
 from dataclasses import replace
 from pathlib import Path
 
-from digitalhuman_h3.streaming.geometry import StreamPlan, plan_native_stream
+from digitalhuman_h3.streaming.geometry import StreamPlan, plan_native_stream, native_frames_for_duration
 from digitalhuman_h3.inference.base10_hiar import Base10HiARRequest, Base10HiARSchedule
 from digitalhuman_h3.inference.prompts import official_three_field_prompt
 
@@ -48,6 +48,8 @@ def geometry(time: int):
 
 def prepare_case(case_path: Path, time: int):
     source = json.loads(case_path.read_text(encoding='utf-8'))
+    if time == 60:
+        return prepare_continuous_case(case_path, source)
     whole, active, transport = geometry(time)
     if len(source['segments']) < time // 5:
         raise ValueError('case.json has fewer ordered 5s segments than requested')
@@ -111,3 +113,85 @@ def prepare_case(case_path: Path, time: int):
             'unaltered_adjacent_pair_current_only'),
         segments=segments, initial_conditions=conditions)
     return case, Base10HiARSchedule(whole, tuple(requests)), active, transport
+
+
+def prepare_continuous_case(case_path: Path, source):
+    """Twelve current-only prompts on one native timeline; no repeated codec prefix.
+
+    Prompt boundaries follow the nearest 17-frame group. Only the final request
+    has the native five-group tail. Audio uses global rounded 40 Hz boundaries.
+    """
+    if len(source['segments']) != 12:
+        raise ValueError('continuous 60s cases require exactly twelve ordered prompts')
+    native_frames = native_frames_for_duration(60)
+    units = plan_native_stream(native_frames, groups_per_phase=1).phases
+    cuts = [0] + [round((120*i-5)/17) for i in range(1,12)] + [len(units)]
+    phases, active, transport, requests, segments = [], [], [], [], []
+    for index, segment in enumerate(source['segments']):
+        if segment['segment_id'] != index:
+            raise ValueError('continuous prompt IDs must be ordered 0 through 11')
+        prompt = segment['prompt']
+        dialogues = re.findall(r'<d>\s*\[Chinese\]\s*(.*?)</d>', prompt, re.DOTALL)
+        if [d.strip() for d in dialogues] != [segment['speech_text'].strip()]:
+            raise ValueError('speech metadata differs from source prompt')
+        if any(prompt.count(field + ':') != 1 for field in
+               ('integrated_multimodal_description', 'overall_soundscape', 'non_diegetic_music')):
+            raise ValueError('prompt must contain exactly the three H3 fields')
+        if re.search(r'Picture\s+2\b', prompt):
+            raise ValueError('first-image-only prompt must not reference Picture 2')
+        chosen = units[cuts[index]:cuts[index+1]]
+        groups = len(chosen)
+        counts = []
+        remaining = groups - (5 if index == 11 else 0)
+        while remaining:
+            count = min(2, remaining); counts.append(count); remaining -= count
+        if index == 11:
+            counts.append(5)
+        begin = len(phases)
+        cursor = 0
+        for count in counts:
+            first, last = chosen[cursor], chosen[cursor+count-1]
+            phases.append(replace(first, index=len(phases), group_count=count,
+                frame_stop=last.frame_stop, video_latent_stop=last.video_latent_stop,
+                audio_latent_stop=last.audio_latent_stop, audio_sample_stop=last.audio_sample_stop))
+            cursor += count
+        global_phases = phases[begin:]
+        start = global_phases[0]
+        local = [replace(p, index=j,
+            frame_start=p.frame_start-start.frame_start, frame_stop=p.frame_stop-start.frame_start,
+            video_latent_start=p.video_latent_start-start.video_latent_start,
+            video_latent_stop=p.video_latent_stop-start.video_latent_start,
+            audio_latent_start=p.audio_latent_start-start.audio_latent_start,
+            audio_latent_stop=p.audio_latent_stop-start.audio_latent_start,
+            audio_sample_start=p.audio_sample_start-start.audio_sample_start,
+            audio_sample_stop=p.audio_sample_stop-start.audio_sample_start)
+            for j,p in enumerate(global_phases)]
+        active.append(StreamPlan(local[-1].frame_stop, tuple(local)))
+        base = plan_native_stream(5+groups*17, groups_per_phase=1)
+        transport_phases, cursor = [], 0
+        for count in counts:
+            first, last = base.phases[cursor], base.phases[cursor+count-1]
+            transport_phases.append(replace(first, index=len(transport_phases), group_count=count,
+                frame_stop=last.frame_stop, video_latent_stop=last.video_latent_stop,
+                audio_latent_stop=last.audio_latent_stop, audio_sample_stop=last.audio_sample_stop))
+            cursor += count
+        transport.append(StreamPlan(base.native_frame_count, tuple(transport_phases)))
+        last = global_phases[-1]
+        requests.append(Base10HiARRequest(index=index, prompt=prompt, seed=segment['seed'],
+            phase_start=begin, phase_stop=len(phases), frame_start=start.frame_start,
+            frame_stop=last.frame_stop, video_latent_start=start.video_latent_start,
+            video_latent_stop=last.video_latent_stop, audio_latent_start=start.audio_latent_start,
+            audio_latent_stop=last.audio_latent_stop))
+        segments.append(dict(prompt=prompt, seed=segment['seed'], dialogue=segment['speech_text'],
+            original_segment_ids=[index], active_frame_start=start.frame_start,
+            active_frame_stop=last.frame_stop, reference_start_seconds=index*5))
+    if len(source['initial_conditions']) != 1 or source['initial_conditions'][0]['frame_index'] != 0:
+        raise ValueError('continuous benchmark requires only the initial frame')
+    condition = source['initial_conditions'][0]
+    image = (case_path.parent/condition['uri']).resolve(strict=True)
+    case = dict(case_id=source['case_id'], source_case_id=source['case_id'], task='i2va',
+        title=source['title'], category=source['category'], description=source['description'],
+        source_manifest=str(case_path.resolve()), source_target_seconds=60,
+        text_policy='twelve_unaltered_5s_prompts_continuous_clean_kv', segments=segments,
+        initial_conditions=[dict(type='image', role='keyframe', uri=str(image), frame_index=0)])
+    return case, Base10HiARSchedule(StreamPlan(native_frames, tuple(phases)), tuple(requests)), active, transport

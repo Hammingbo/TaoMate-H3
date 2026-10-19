@@ -92,3 +92,58 @@ older CPU host, first create that environment with Conda and then run:
 This explicitly installs wheels for the newer GPU platform without importing
 CUDA code on the CPU host. All GPU hosts must mount the environment at the same
 absolute path and provide a compatible Linux x86-64 runtime and NVIDIA driver.
+
+## Continuous sixty-second test set
+
+The CPU preparer uses the existing live-generation video-analysis transport and
+H3 three-field formatter to produce twelve five-second prompts for each of nine
+source tasks. It reuses the previously edited initial image; no end image or new
+image editing is involved. Credentials stay in that existing checkout.
+
+```bash
+python deploy/h20/prepare_test_cases.py \
+  --test-set /path/to/test_cases.json \
+  --live-generation /path/to/live-generation \
+  --output /shared/TaoMate-H3/outputs/test-cases
+python deploy/h20/prepare_continuous.py /shared/TaoMate-H3/outputs/test-cases
+python deploy/h20/batch_infer.py --continuous \
+  --manifest /shared/TaoMate-H3/outputs/test-cases/continuous_manifest.json \
+  --output /shared/TaoMate-H3/outputs/test-cases/continuous_renders \
+  --model-root "$MODEL_ROOT" --checkpoint "$CHECKPOINT"
+```
+
+For an early one-video pilot, add `--allow-partial` to the preparation step and
+`--limit 1 --allow-partial` to inference. Reuse the output directory for the full
+run; completed videos remain valid. Input JSON, prompts and anchor images are
+bound by SHA256. Incomplete output directories are archived before retry.
+
+Each case contains twelve unmodified prompts and one initial image. One streaming
+overlay persists throughout that case, retaining clean AV-KV across all prompt
+changes. It resets only when starting another source task. The runtime receipt
+must prove all eleven boundary handoffs inherited KV, without a boundary reset,
+audio KV reset, or noisy KV write. There is no intermediate MP4/frame feedback.
+
+The native codec uses `17*n+5` frames. Eleven prompt windows contain seven native
+groups; the last contains eight, yielding 1450 frames (60.4167 seconds). Prompt
+starts stay within 0.3 seconds of the nominal five-second grid. Most AR phases
+have two groups; only the final phase uses the original five-group tail. Global
+40 Hz audio boundaries avoid repeated codec prefixes and cumulative drift.
+
+The teacher generates frozen base-model audio with its existing tail40 reference
+between requests; it does not retain teacher KV. The student retains its generated
+clean video/audio KV with the original recent-seven policy and video sink. This
+is rolling history, not an unbounded sixty-second cache. Text features are
+precomputed and reused, and model weights stay resident across cases.
+
+Each video preserves `native/video.mp4` and produces `delivery/video.mp4` with
+1440 frames, exactly 60 seconds. Audio and video VAEs each decode the complete
+latent timeline once. Both files must pass full audio/video decoding, H.264
+768×1376 at 24 fps and stereo AAC at 32 kHz. Validation receipts include SHA256.
+`continuous_renders/status.json` records progress. Create the private review page:
+
+```bash
+python deploy/h20/render_test_cases.py /shared/TaoMate-H3/outputs/test-cases --continuous
+```
+
+The independent `--time 5` path remains available for diagnostics. Generated
+prompts, private inputs, features and videos belong in ignored output storage.

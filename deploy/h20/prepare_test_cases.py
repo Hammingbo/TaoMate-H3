@@ -31,7 +31,7 @@ Keep one intact closed product, with small natural movements. No unpacking,
 extracting contents, application to the body, cuts, zooms or additional people.
 Keep printed details already in the image; add no captions, logos or overlays.
 
-Each shot contains shot_id, duration=5, anchor_action, speech_script and h3_prompt.
+Each shot contains shot_id (integer 1 through 12), duration=5 (number), anchor_action, speech_script and h3_prompt.
 h3_prompt has EXACTLY three nonempty English fields:
 integrated_multimodal_description, overall_soundscape, non_diegetic_music.
 The first field begins [Shot 1], mentions <Picture 1>, states 5.00 seconds,
@@ -77,8 +77,15 @@ def validate_script(script, rules, count=12):
     if not isinstance(shots, list) or len(shots) != count:
         raise ValueError(f"expected {count} shots")
     for index, shot in enumerate(shots, 1):
-        if shot.get("shot_id") != index or shot.get("duration") != 5:
-            raise ValueError("shot order or five-second duration differs")
+        if str(shot.get("shot_id")) != str(index):
+            raise ValueError(f"shot {index}: shot_id must be {index}, got {shot.get('shot_id')!r}")
+        try:
+            duration = float(shot.get('duration'))
+        except (ValueError, TypeError):
+            duration = None
+        if duration != 5:
+            raise ValueError(f"shot {index}: duration must be 5, got {shot.get('duration')!r}")
+        shot['shot_id'], shot['duration'] = index, 5
         count = len(re.findall(r"[\u3400-\u9fff]", shot.get("speech_script", "")))
         if count > 28:
             raise ValueError(f"shot {index} has {count} Chinese characters; shorten its speech to 14-20 characters, and update its dialogue tag identically")
@@ -122,6 +129,16 @@ def main():
         if sha256(anchor) != sha256(image):
             raise ValueError("cached anchor differs from the edited first image")
         script_path = folder / "script_5s.json"
+        if not script_path.exists():
+            for draft_path in sorted(folder.glob('draft_*.json'), reverse=True):
+                try:
+                    cached = json.loads(draft_path.read_text())
+                    validate_script(cached, rules)
+                except (ValueError, TypeError, KeyError):
+                    continue
+                script_path.write_text(json.dumps(cached, ensure_ascii=False, indent=2))
+                print(f"DRAFT_RECOVERED source={source_id} file={draft_path.name}", flush=True)
+                break
         if script_path.exists():
             script = json.loads(script_path.read_text())
             shots = validate_script(script, rules)
