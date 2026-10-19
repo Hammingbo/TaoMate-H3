@@ -29,14 +29,17 @@ def media_passed(folder, frames):
             and data.get('video_sha256') == digest(video))
 
 
-def load_cases(manifest_path, limit):
+def load_cases(manifest_path, limit, allow_partial=False):
     from fl2va.plan import prepare_case
     manifest = json.loads(manifest_path.read_text())
     entries = manifest["cases"]
-    if len(entries) != 108 or len({e['case_id'] for e in entries}) != 108:
-        raise ValueError("expected exactly 108 uniquely identified input cases")
+    if (not entries or len(entries) > 108 or len({e['case_id'] for e in entries}) != len(entries)
+            or (len(entries) != 108 and not allow_partial)):
+        raise ValueError("expected 108 unique inputs, or an explicit partial pilot manifest")
+    if limit > len(entries):
+        raise ValueError('requested more cases than this manifest contains')
     counts = {i: sum(e['source_index'] == i for e in entries) for i in range(1, 10)}
-    if set(counts.values()) != {12}:
+    if not set(counts.values()) <= ({0, 12} if allow_partial else {12}):
         raise ValueError("every source must have exactly twelve cases")
     prepared = []
     for entry in entries[:limit]:
@@ -163,12 +166,13 @@ def main():
     parser.add_argument('--checkpoint', type=Path, required=True)
     parser.add_argument('--limit', type=int, default=108)
     parser.add_argument('--dry-run', action='store_true')
+    parser.add_argument('--allow-partial', action='store_true', help='admit completed sources for an early pilot')
     parser.add_argument('--worker-stage', choices=('teacher', 'student'))
     args = parser.parse_args()
     if not 1 <= args.limit <= 108:
         parser.error('--limit must be between 1 and 108')
     args.output = args.output.resolve()
-    prepared = load_cases(args.manifest, args.limit)
+    prepared = load_cases(args.manifest, args.limit, args.allow_partial)
     if args.dry_run:
         print(json.dumps({'count': len(prepared), 'task': 'i2va', 'tail_constraint': False,
                           'native_frames': 124, 'delivered_frames': 120,
@@ -189,6 +193,8 @@ def main():
                '--manifest', str(args.manifest.resolve()), '--output', str(args.output),
                '--model-root', str(args.model_root), '--checkpoint', str(args.checkpoint),
                '--limit', str(args.limit)]
+    if args.allow_partial:
+        command.append('--allow-partial')
     for stage in ('teacher', 'student'):
         marker = 'teacher/complete.json' if stage == 'teacher' else 'delivery/validation.json'
         complete = (all(media_passed(args.output/e['case_id']/'delivery', 120) for e, *_ in prepared)
