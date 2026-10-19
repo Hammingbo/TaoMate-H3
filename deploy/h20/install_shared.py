@@ -40,8 +40,8 @@ def main() -> None:
     root = Path(__file__).resolve().parents[2]
     subprocess.run([sys.executable, "-m", "pip", "install", "--no-deps", "--no-index",
                     "--no-build-isolation", "-e", str(root)], check=True)
-    subprocess.run([sys.executable, "-m", "pip", "check"], check=True)
     print(f"SHARED_ENVIRONMENT_READY: {sys.prefix}", flush=True)
+    print("Run python -m pip check on the GPU host to validate target wheel tags.", flush=True)
 
 
 if __name__ == "__main__":

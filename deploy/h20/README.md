@@ -85,6 +85,8 @@ older CPU host, first create that environment with Conda and then run:
 ```bash
 /shared/1_code_space/envs/taomate-h3/bin/python deploy/h20/install_shared.py \
   --wheelhouse /shared/wheelhouse
+# GPU host:
+/shared/1_code_space/envs/taomate-h3/bin/python -m pip check
 ```
 
 This explicitly installs wheels for the newer GPU platform without importing
